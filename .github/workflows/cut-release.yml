@@ -40,6 +40,10 @@ jobs:
         run: |
           if git ls-remote --exit-code --heads origin release/${{ inputs.version }} > /dev/null 2>&1; then
             echo "❌ release/${{ inputs.version }} already exists."
+            echo ""
+            echo "📋 Most recent release branches:"
+            git fetch origin 'refs/heads/release/*:refs/remotes/origin/release/*' --quiet
+            git for-each-ref --sort=-committerdate --format='%(committerdate:short)  %(refname:short)' refs/remotes/origin/release/ | head -5
             exit 1
           fi
 
