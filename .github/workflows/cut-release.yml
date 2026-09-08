@@ -1,0 +1,41 @@
+name: Cut Release Branch
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g. 1.4.0)'
+        required: true
+        type: string
+
+jobs:
+  cut-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout staging
+        uses: actions/checkout@v4
+        with:
+          ref: staging
+          fetch-depth: 0
+
+      - name: Create and push release branch
+        run: |
+          git config user.name "release-bot"
+          git config user.email "release-bot@users.noreply.github.com"
+          git checkout -b release/${{ inputs.version }}
+          git push origin release/${{ inputs.version }}
+
+      - name: Open draft tracking PR into main
+        run: |
+          gh pr create \
+            --base main \
+            --head release/${{ inputs.version }} \
+            --title "Release ${{ inputs.version }}" \
+            --body "QA tracking PR for release/${{ inputs.version }}. Merge once QA passes." \
+            --draft
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
